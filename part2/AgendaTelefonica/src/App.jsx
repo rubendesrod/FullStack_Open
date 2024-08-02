@@ -1,50 +1,10 @@
 import { useState, useEffect } from "react";
 import personService from "./services/persons";
 import "./App.css";
-
-// Componente para realizar la búsqueda
-const Filter = ({ searchValue, onSearchChange }) => {
-  return (
-    <div className="search">
-      <p>filter shown with</p>
-      <input value={searchValue} onChange={onSearchChange} />
-    </div>
-  );
-};
-
-// Componente para el formulario de la agenda
-const FormData = (props) => {
-  const { onSubmit, onChangeP, onChangeN, valueP, valueN } = props;
-  return (
-    <form onSubmit={onSubmit}>
-      <div>
-        name:
-        <input onChange={onChangeP} value={valueP} />
-      </div>
-      <div>
-        number:
-        <input onChange={onChangeN} value={valueN} type="number" />
-      </div>
-      <div>
-        <button type="submit">add</button>
-      </div>
-    </form>
-  );
-};
-
-// Compoenente para cada persona que se registre en la agenda
-const Persons = ({ listPersons, deletePerson }) => {
-  return (
-    <ul>
-      {listPersons.map((p) => (
-        <li key={p.id}>
-          {p.name} | {p.number}{" "}
-          <button onClick={() => deletePerson(p.id)}>delete</button>
-        </li>
-      ))}
-    </ul>
-  );
-};
+import FormData from "./components/FormData";
+import Filter from "./components/Filter";
+import Persons from "./components/Persons";
+import Notification from "./components/Notification";
 
 // Componte principal
 function App() {
@@ -63,6 +23,12 @@ function App() {
 
   // Estado para el valor de búsqueda
   const [searchValue, setSearchValue] = useState("");
+
+  // Estado para el mensaje de verificación o incorrecto
+  const [informationMessage, setInformationMessage] = useState({
+    message: null,
+    type: "correct",
+  });
 
   // Funcion para comprobar si el nombre ya existe en la agenda
   const comprobarNombre = (name) => {
@@ -85,9 +51,24 @@ function App() {
           );
           setNewName("");
           setNewPhone("");
+          const updateInformation = {
+            message: `El numero de ${updatedPerson.name} ha sido actualizado`,
+            type: "correct",
+          };
+          setInformationMessage(updateInformation);
+          setTimeout(() => {
+            setInformationMessage({ message: null, type: "correct" });
+          }, 5000);
         })
-        .cath((e) => {
-          alert(`${person.name} no se ha podido actualizar`);
+        .catch((error) => {
+          const updateInformation = {
+            message: `El contacto ${updatedPerson.name} no se ha podido actualizar`,
+            type: "error",
+          };
+          setInformationMessage(updateInformation),
+            setTimeout(() => {
+              setInformationMessage({ message: null, type: "correct" });
+            }, 5000);
         });
     } else {
       setNewName("");
@@ -112,8 +93,8 @@ function App() {
     event.preventDefault();
 
     if (comprobarNombre(newName)) {
-      aupdatePerson()
-      return
+      aupdatePerson();
+      return;
     }
 
     // Creo un objeto nuevo para concatenar con el array de objetos
@@ -122,11 +103,31 @@ function App() {
       number: newPhone,
     };
 
-    personService.create(objectPerson).then((returnedPersona) => {
-      setPersons(persons.concat(returnedPersona));
-      setNewName("");
-      setNewPhone("");
-    });
+    personService
+      .create(objectPerson)
+      .then((returnedPersona) => {
+        setPersons(persons.concat(returnedPersona));
+        setNewName("");
+        setNewPhone("");
+        const updateInformation = {
+          message: `${returnedPersona.name} ha sido agregado a tu agenda`,
+          type: "correct",
+        };
+        setInformationMessage(updateInformation);
+        setTimeout(() => {
+          setInformationMessage({ message: null, type: "correct" });
+        }, 5000);
+      })
+      .catch((error) => {
+        const updateInformation = {
+          message: `No se pudo agregar a ${objectPerson.name} a tu agenda`,
+          type: "error",
+        };
+        setInformationMessage(updateInformation);
+        setTimeout(() => {
+          setInformationMessage({ message: null, type: "correct" });
+        }, 5000);
+      });
   };
 
   // Funcion para cuando el usuario ingrese un nombre
@@ -152,6 +153,8 @@ function App() {
   return (
     <div>
       <h2>Phonebook</h2>
+
+      <Notification informationMessage={informationMessage} />
 
       <Filter searchValue={searchValue} onSearchChange={handleSearchChange} />
 
