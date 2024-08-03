@@ -1,0 +1,11 @@
+.filter{
+    display: flex;
+}
+
+.filter p{
+    margin-right: 10px;
+}
+
+.weather{
+    display: flex;
+}
